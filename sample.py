@@ -195,7 +195,7 @@ motor3 = 0
 data = [] #detect 
 
 
-vid = cv2.VideoCapture(0)
+#vid = cv2.VideoCapture(0)
 
 
 
@@ -204,14 +204,16 @@ def server():
     server = ThreadedWebsocketServer("127.0.0.1", 5000, app)
     print("web server start ... ")
     server.serve_forever()
+    #t = threading.Thread(target=server.serve_forever)
+    #t.start()
 #end server
 
 #object detect
 def obj_detect():
     global Status,data,label,confidence,bbox
     while True:
-#        if Status == 0:
-         if True:
+        if Status == 0:
+         #if True:
             return_value,arr=vid.read()
             try:
                 im=nparray_to_image(arr)
@@ -224,7 +226,7 @@ def obj_detect():
                # cv2.putText(im, "{} [{:.2f}]".format(label, float(confidence)),
                 #    (left, top - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                  #   (0,255,0), 2)
-            print(data)
+            #print(data)
             time.sleep(0.5)
 #end object detect
 
@@ -271,7 +273,7 @@ def motor2_pos():
     change[2] = True
     global motor2 
     motor2 = 0
-    #return render_template('index.html')
+    return render_template('index.html')
 
 @app.route('/motor2/neg')
 def motor2_neg():    
@@ -316,22 +318,22 @@ def motor4_neg():
 
 
 @sockets.route('/echo')
-def echo_socket(ws):
-    global data
+def echo_socketClient(ws):
+    global data,change
+    print("Connected /echo")
 
     while not ws.closed:
-        time.sleep(0.5)       
+        time.sleep(0.5)
 #         print(message)
         if(len(data)>0):
             for i in range(len(data)):
                 ws.send(str(data[i][0])+str(data[i][1]))
                 
-            #data = []
         for i in range(5):
             if change[i] == True:
                 change[i] = False #initial  
                 print("Change: "+str(i))
-                
+
 #                 message = ws.receive()                
                 if i == 0:       
                     ws.send(str(i)+str(Status))
@@ -348,14 +350,15 @@ def echo_socket(ws):
 
                 
 @sockets.route('/web')
-def echo_socket(ws):
+def echo_socketWeb(ws):
     global data
+    print("connected /web")
     while not ws.closed:        
         if(len(data)>0):
             for i in range(len(data)):
-                ws.send(str(data[i][0])+", confidence: "+str(data[i][1]))
+                ws.send(str(data[i][0])[1:]+", "+str(data[i][1]))
         time.sleep(0.5)
-
+  
     print("Web disconnected!!!")
 
 
@@ -389,12 +392,14 @@ if __name__ == "__main__":
     #r = detect(net, meta, "data/eagle.jpg".encode("utf8"))
 
 
-    #vid = cv2.VideoCapture(0)
+    vid = cv2.VideoCapture(0)
+    t2 = threading.Thread(target=obj_detect, args=())    
+    t2.start()
+    #t1 = threading.Thread(target=server, args=())
+    #t1.start()
+    server()
+    #obj_detect()
     
-    t1 = threading.Thread(target=server, args=())
-    t1.start()
-    obj_detect()
-#    t2 = threading.Thread(target=obj_detect, args=())    
-#    t2.start()
+    
     
 
